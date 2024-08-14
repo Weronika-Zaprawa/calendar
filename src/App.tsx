@@ -31,6 +31,7 @@ import {
 } from "firebase/firestore";
 
 import { CalendarEvent, useAppContext } from "./services/AppContext";
+import { toBeVisible } from "@testing-library/jest-dom/matchers";
 
 type ChangeSet = {
   added?: Record<string, any>;
@@ -69,11 +70,14 @@ function App() {
 
   const calendarEventsList = useMemo(
     () =>
-      calendarEvents.map(({ startDate, endDate, title }: CalendarEvent) => ({
-        startDate,
-        endDate,
-        title,
-      })),
+      calendarEvents.map(
+        ({ startDate, endDate, title, id }: CalendarEvent) => ({
+          startDate,
+          endDate,
+          title,
+          id,
+        })
+      ),
     [calendarEvents]
   );
 
@@ -90,13 +94,18 @@ function App() {
       getEvents();
     }
     if (changed) {
-      updateDoc(doc(db, "message", changed.id), changed);
+      const id = Object.keys(changed)[0];
+      const updated = calendarEvents.find((event) => event.id === id);
+
+      const docRef = doc(db, "messages", id);
+      await updateDoc(docRef, { ...updated, ...changed[id] });
+      getEvents();
     }
     if (deleted) {
-      deleteDoc(doc(db, "messages", String(deleted)));
+      await deleteDoc(doc(db, "messages", String(deleted)));
+      getEvents();
     }
   };
-  console.log(calendarEventsList);
 
   return (
     <div className="App">
@@ -128,6 +137,7 @@ function App() {
                 inputFormat={"MM/DD/YYYY HH:mm"}
               />
             )}
+            booleanEditorComponent={(props) => <div></div>}
           />
         </Scheduler>
       </Paper>

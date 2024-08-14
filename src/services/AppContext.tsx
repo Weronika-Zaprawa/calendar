@@ -50,8 +50,15 @@ export const AppProvider = ({ children }: { children: ReactElement }) => {
       console.log(doc.id, "=>", doc.data().startDate.seconds);
       events.push({
         ...doc.data(),
-        startDate: formatDate(doc.data().startDate.seconds),
-        endDate: formatDate(doc.data().endDate.seconds),
+        startDate:
+          typeof doc.data().startDate === "string"
+            ? doc.data().startDate
+            : formatDate(doc.data().startDate.seconds),
+        endDate:
+          typeof doc.data().endDate === "string"
+            ? doc.data().endDate
+            : formatDate(doc.data().endDate.seconds),
+        id: doc.id,
       } as any);
     });
     setCalendarEvents(events);
