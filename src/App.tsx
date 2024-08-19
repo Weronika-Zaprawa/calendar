@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import "./App.scss";
 import Paper from "@mui/material/Paper";
 import db from "./firebase";
@@ -11,7 +11,6 @@ import {
   ViewSwitcher,
   MonthView,
   DateNavigator,
-  TodayButton,
   Appointments,
   AppointmentTooltip,
   AppointmentForm,
@@ -31,7 +30,7 @@ import {
 } from "firebase/firestore";
 
 import { CalendarEvent, useAppContext } from "./services/AppContext";
-import { toBeVisible } from "@testing-library/jest-dom/matchers";
+import { title } from "process";
 
 type ChangeSet = {
   added?: Record<string, any>;
@@ -39,34 +38,19 @@ type ChangeSet = {
   deleted?: number | string;
 };
 
-// const schedulerData = [
-//   {
-//     startDate: "2024-08-12T09:45",
-//     endDate: "2024-08-12T11:00",
-//     title: "Meeting",
-//   },
-//   {
-//     startDate: "2018-11-01T12:00",
-//     endDate: "2018-11-01T13:30",
-//     title: "Go to a gym",
-//   },
-// ];
-
-const schedulerData = [
-  {
-    startDate: "2024-08-15T10:00",
-    endDate: "2024-08-15T22:59",
-    title: "Shopping",
-  },
-  { startDate: "2024-08-20T08:00", endDate: "2024-08-20T12:59", title: "Code" },
-];
+type ViewNames = {
+  Day: string;
+  Week: string;
+  Month: string;
+};
 
 function App() {
+  const { calendarEvents, getEvents } = useAppContext();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [locale, setLocale] = useState("pl-PL");
-  const ref = collection(db, "messages");
 
-  const { calendarEvents, getEvents } = useAppContext();
+  const ref = collection(db, "messages");
 
   const calendarEventsList = useMemo(
     () =>
@@ -89,11 +73,24 @@ function App() {
     setLocale(event.target?.value);
 
   const commitChanges = async ({ added, changed, deleted }: ChangeSet) => {
+    console.log(added);
     if (added) {
+      if (added.endDate < added.startDate) {
+        if (locale === "pl-PL") {
+          alert("Data końcowa nie może być wcześniej niż data początkowa!");
+        } else {
+          alert("The end date cannot be earlier than the start date");
+        }
+        return;
+      }
+      if (!added.title) {
+        added.title = "";
+      }
       await addDoc(ref, added);
       getEvents();
     }
     if (changed) {
+      console.log(changed);
       const id = Object.keys(changed)[0];
       const updated = calendarEvents.find((event) => event.id === id);
 
@@ -102,9 +99,16 @@ function App() {
       getEvents();
     }
     if (deleted) {
+      console.log(deleted);
       await deleteDoc(doc(db, "messages", String(deleted)));
       getEvents();
     }
+  };
+
+  const viewNames: ViewNames = {
+    Day: "Dzień",
+    Week: "Tydzień",
+    Month: "Miesiąc",
   };
 
   return (
@@ -119,13 +123,12 @@ function App() {
           />
           <EditingState onCommitChanges={commitChanges} />
           <IntegratedEditing />
-          <DayView />
-          <WeekView />
-          <MonthView />
+          <DayView displayName={locale === "pl-PL" ? "Dzień" : "Day"} />
+          <WeekView displayName={locale === "pl-PL" ? "Tydzień" : "Week"} />
+          <MonthView displayName={locale === "pl-PL" ? "Miesiąc" : "Month"} />
 
           <Toolbar />
           <DateNavigator />
-          <TodayButton />
           <ViewSwitcher />
           <Appointments />
           <AppointmentTooltip showCloseButton showOpenButton />

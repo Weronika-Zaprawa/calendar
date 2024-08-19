@@ -47,7 +47,6 @@ export const AppProvider = ({ children }: { children: ReactElement }) => {
     const docSnap = await getDocs(collection(db, "messages"));
     const events: CalendarEvent[] = [];
     docSnap.forEach((doc) => {
-      console.log(doc.id, "=>", doc.data().startDate.seconds);
       events.push({
         ...doc.data(),
         startDate:
