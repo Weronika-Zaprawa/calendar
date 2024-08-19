@@ -73,7 +73,6 @@ function App() {
     setLocale(event.target?.value);
 
   const commitChanges = async ({ added, changed, deleted }: ChangeSet) => {
-    console.log(added);
     if (added) {
       if (added.endDate < added.startDate) {
         if (locale === "pl-PL") {
@@ -90,7 +89,6 @@ function App() {
       getEvents();
     }
     if (changed) {
-      console.log(changed);
       const id = Object.keys(changed)[0];
       const updated = calendarEvents.find((event) => event.id === id);
 
@@ -99,7 +97,6 @@ function App() {
       getEvents();
     }
     if (deleted) {
-      console.log(deleted);
       await deleteDoc(doc(db, "messages", String(deleted)));
       getEvents();
     }
